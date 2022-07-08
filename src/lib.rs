@@ -2,7 +2,6 @@
 
 extern crate test;
 
-use std::collections::HashMap;
 use logos::Lexer;
 use crate::component::{AsComponent, Component};
 use crate::tokens::{MessageToken, Parser};
@@ -15,11 +14,10 @@ pub mod component;
 mod tests {
     #![allow(soft_unstable)]
 
-    use std::collections::HashMap;
     use test::Bencher;
     use crate::tokens::{MessageToken, Parser};
     use logos::{Logos, Lexer};
-    use crate::{lobster, placeholder_lobster};
+    use crate::{Component, lobster, placeholder_lobster};
 
     #[test]
     fn test_lexer() {
@@ -53,6 +51,13 @@ mod tests {
         println!("{}", serde_json::to_string(&lobster).unwrap());
     }
 
+    #[test]
+    fn test_flattening() {
+        let mut message = lobster("<red>Some message<blue> Even more message <green>Green message ").append(Component::translate::<&str, Component>("some.message.translate", None));
+
+        println!("{}", message.flatten())
+    }
+
     #[bench]
     fn benchmark_lobster(bencher: &mut Bencher) {
         bencher.iter(|| {
@@ -65,7 +70,7 @@ pub fn lobster<S: Into<String>>(msg: S) -> Component {
     use logos::Logos;
     let st = msg.into();
     let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
-    let mut parser = Parser::new(lexer);
+    let parser = Parser::new(lexer);
 
     parser.parse()
 }

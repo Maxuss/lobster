@@ -338,6 +338,18 @@ impl Component {
             Formatting::Reset => self.reset(do_enable)
         }
     }
+
+    pub fn flatten(&mut self) -> String {
+        let mut buf = self.contents.flatten();
+
+        if let Some(children) = &mut self.extra {
+            for child in children.iter_mut() {
+                buf.push_str(&child.flatten())
+            }
+        }
+
+        return buf
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
@@ -383,6 +395,19 @@ impl Default for MessageContents {
     fn default() -> Self {
         MessageContents::Plain {
             text: "".to_string(),
+        }
+    }
+}
+
+impl MessageContents {
+    pub fn flatten(&self) -> String {
+        match self {
+            MessageContents::Plain { text } => text.clone(),
+            MessageContents::Translate(translated) => translated.translate.clone(),
+            MessageContents::Score { .. } => "<scoreboard message>".into(),
+            MessageContents::Entity(_) => "<entity message>".into(),
+            MessageContents::Keybind(key) => key.keybind.clone(),
+            MessageContents::Nbt(_) => "<nbt message>".into()
         }
     }
 }
@@ -463,6 +488,7 @@ impl FromStr for NamedColor {
             "red" => Red,
             "gold" => Gold,
             "yellow" => Yellow,
+            "green" => Green,
             "dark_green" => DarkGreen,
             "aqua" => Aqua,
             "dark_aqua" => DarkAqua,
