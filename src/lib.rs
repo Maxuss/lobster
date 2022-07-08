@@ -4,7 +4,7 @@ extern crate test;
 
 use std::collections::HashMap;
 use logos::Lexer;
-use crate::component::Component;
+use crate::component::{AsComponent, Component};
 use crate::tokens::{MessageToken, Parser};
 
 pub mod tokens;
@@ -45,9 +45,10 @@ mod tests {
 
     #[test]
     fn test_placeholders() {
-        let lobster = placeholder_lobster("Before placeholder, <replace_me> <reset>after placeholder.", HashMap::from([(
-            "replace_me".into(), lobster("<aqua>This is a <dark_aqua>placeholder!")
-        )]));
+        let lobster = placeholder_lobster("Before placeholder, <replace_me> Stuff after placeholder. <another>", [
+            ("replace_me", lobster("<aqua>This is a <dark_aqua>placeholder!<reset>")),
+            ("another", lobster("<gold><bold>Another placeholder!"))
+        ]);
 
         println!("{}", serde_json::to_string(&lobster).unwrap());
     }
@@ -69,7 +70,7 @@ pub fn lobster<S: Into<String>>(msg: S) -> Component {
     parser.parse()
 }
 
-pub fn placeholder_lobster<S: Into<String>>(msg: S, placeholders: HashMap<String, Component>) -> Component {
+pub fn placeholder_lobster<S: Into<String>, C: AsComponent + Sized, const N: usize>(msg: S, placeholders: [(S, C); N]) -> Component {
     use logos::Logos;
     let st = msg.into();
     let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
