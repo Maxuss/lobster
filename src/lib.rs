@@ -2,6 +2,7 @@
 
 extern crate test;
 
+use std::collections::HashMap;
 use logos::Lexer;
 use crate::component::Component;
 use crate::tokens::{MessageToken, Parser};
@@ -14,10 +15,11 @@ pub mod component;
 mod tests {
     #![allow(soft_unstable)]
 
+    use std::collections::HashMap;
     use test::Bencher;
     use crate::tokens::{MessageToken, Parser};
     use logos::{Logos, Lexer};
-    use crate::lobster;
+    use crate::{lobster, placeholder_lobster};
 
     #[test]
     fn test_lexer() {
@@ -41,6 +43,15 @@ mod tests {
         println!("{}", serde_json::to_string(&out).unwrap());
     }
 
+    #[test]
+    fn test_placeholders() {
+        let lobster = placeholder_lobster("Before placeholder, <replace_me> <reset>after placeholder.", HashMap::from([(
+            "replace_me".into(), lobster("<aqua>This is a <dark_aqua>placeholder!")
+        )]));
+
+        println!("{}", serde_json::to_string(&lobster).unwrap());
+    }
+
     #[bench]
     fn benchmark_lobster(bencher: &mut Bencher) {
         bencher.iter(|| {
@@ -49,12 +60,23 @@ mod tests {
     }
 }
 
-#[inline]
 pub fn lobster<S: Into<String>>(msg: S) -> Component {
     use logos::Logos;
     let st = msg.into();
     let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
     let mut parser = Parser::new(lexer);
+
+    parser.parse()
+}
+
+pub fn placeholder_lobster<S: Into<String>>(msg: S, placeholders: HashMap<String, Component>) -> Component {
+    use logos::Logos;
+    let st = msg.into();
+    let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
+    let mut parser = Parser::new(lexer);
+    for (k, v) in placeholders {
+        parser.placeholder(k, v);
+    }
 
     parser.parse()
 }

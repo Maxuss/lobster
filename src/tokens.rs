@@ -96,7 +96,7 @@ impl<'a> Parser<'a> {
                         bail!("Undefined placeholder: '{}'!", placeholder)
                     }
                     let ph = self.placeholders.get(&placeholder).unwrap();
-                    self.current = self.current.append(ph.clone());
+                    self.current = self.current.append(ph.clone()).append(Component::text("").reset(true));
                     Ok(())
                 }
                 MessageToken::Contents(contents) => {
