@@ -2,7 +2,6 @@
 
 extern crate test;
 
-use std::collections::HashMap;
 use logos::Lexer;
 use crate::component::{AsComponent, Component};
 use crate::tokens::{MessageToken, Parser};
@@ -65,7 +64,7 @@ pub fn lobster<S: Into<String>>(msg: S) -> Component {
     use logos::Logos;
     let st = msg.into();
     let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
-    let mut parser = Parser::new(lexer);
+    let parser = Parser::new(lexer);
 
     parser.parse()
 }
