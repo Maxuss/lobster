@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use serde::{Serialize, Deserialize};
 use serde_with::skip_serializing_none;
+use uuid::Uuid;
 
 pub trait AsComponent {
     fn as_component(&self) -> Component;
@@ -18,6 +19,116 @@ impl From<&str> for Component {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[skip_serializing_none]
+pub struct DisplayItemData {
+    pub id: String,
+    pub count: Option<i32>,
+    pub tag: Option<String>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[skip_serializing_none]
+pub struct DisplayEntityData {
+    pub name: Option<Component> ,
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    pub id: Uuid
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum HoverEvent {
+    ShowText {
+        action: String,
+        contents: Box<Component>
+    },
+    ShowItem {
+        action: String,
+        contents: DisplayItemData
+    },
+    ShowEntity {
+        action: String,
+        contents: Box<DisplayEntityData>
+    }
+}
+
+impl HoverEvent {
+    pub fn show_text(text: Component) -> HoverEvent {
+        HoverEvent::ShowText {
+            action: "show_text".to_string(),
+            contents: Box::new(text)
+        }
+    }
+
+    pub fn show_item(item_data: DisplayItemData) -> HoverEvent {
+        HoverEvent::ShowItem {
+            action: "show_item".to_string(),
+            contents: item_data
+        }
+    }
+
+    pub fn show_entity(entity_data: DisplayEntityData) -> HoverEvent {
+        HoverEvent::ShowEntity {
+            action: "show_entity".to_string(),
+            contents: Box::new(entity_data)
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClickEvent {
+    action: ClickAction,
+    value: String
+}
+
+impl ClickEvent {
+    pub fn open_url<S: Into<String>>(url: S) -> Self {
+        Self {
+            action: ClickAction::OpenUrl,
+            value: url.into()
+        }
+    }
+
+    pub fn run_command<S: Into<String>>(cmd: S) -> Self {
+        Self {
+            action: ClickAction::RunCommand,
+            value: cmd.into()
+        }
+    }
+
+    pub fn suggest_command<S: Into<String>>(cmd: S) -> Self {
+        Self {
+            action: ClickAction::SuggestCommand,
+            value: cmd.into()
+        }
+    }
+
+    pub fn change_page(page: i32) -> Self {
+        Self {
+            action: ClickAction::ChangePage,
+            value: page.to_string()
+        }
+    }
+
+    pub fn copy_to_clipboard<S: Into<String>>(msg: S) -> Self {
+        Self {
+            action: ClickAction::CopyToClipboard,
+            value: msg.into()
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum ClickAction {
+    OpenUrl,
+    RunCommand,
+    SuggestCommand,
+    ChangePage,
+    CopyToClipboard
+}
+
 #[skip_serializing_none]
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Component {
@@ -31,6 +142,11 @@ pub struct Component {
     color: Option<TextColor>,
     #[serde(flatten)]
     contents: MessageContents,
+    insertion: Option<String>,
+    #[serde(rename = "clickEvent")]
+    click_event: Option<ClickEvent>,
+    #[serde(rename = "hoverEvent")]
+    hover_event: Option<HoverEvent>
 }
 
 impl ToString for Component {
@@ -153,6 +269,21 @@ impl Component {
             storage: Some(storage.into()),
         }));
         df.clone()
+    }
+
+    pub fn insert_text<S: Into<String>>(&mut self, text: S) -> Self {
+        self.insertion = Some(text.into());
+        self.clone()
+    }
+
+    pub fn click_event(&mut self, e: ClickEvent) -> Self {
+        self.click_event = Some(e);
+        self.clone()
+    }
+
+    pub fn hover_event(&mut self, e: HoverEvent) -> Self {
+        self.hover_event = Some(e);
+        self.clone()
     }
 
     pub fn append<C>(&mut self, comp: C) -> Self
