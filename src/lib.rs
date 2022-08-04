@@ -4,10 +4,13 @@ extern crate test;
 
 use logos::Lexer;
 use crate::component::{AsComponent, Component};
-use crate::tokens::{MessageToken, Parser};
+use message::tokens::{MessageToken, Parser};
 
-pub mod tokens;
 pub mod component;
+#[cfg(feature = "minimessage")]
+pub mod message;
+#[cfg(feature = "minimessage")]
+pub use message::{lobster, placeholder_lobster};
 
 
 #[cfg(test)]
@@ -15,9 +18,10 @@ mod tests {
     #![allow(soft_unstable)]
 
     use test::Bencher;
-    use crate::tokens::{MessageToken, Parser};
-    use logos::{Logos, Lexer};
+    use crate::message::tokens::{MessageToken, Parser};
+    use logos::{Lexer, Logos};
     use crate::{Component, lobster, placeholder_lobster};
+    use crate::message::{lobster, placeholder_lobster};
 
     #[test]
     fn test_lexer() {
@@ -64,25 +68,4 @@ mod tests {
             test::black_box(lobster("<red>Red text <green>Green text <italic><yellow>Yellow italic text. <bold>BOLD. <red>Red text"))
         })
     }
-}
-
-pub fn lobster<S: Into<String>>(msg: S) -> Component {
-    use logos::Logos;
-    let st = msg.into();
-    let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
-    let parser = Parser::new(lexer);
-
-    parser.parse()
-}
-
-pub fn placeholder_lobster<S: Into<String>, C: AsComponent + Sized, const N: usize>(msg: S, placeholders: [(S, C); N]) -> Component {
-    use logos::Logos;
-    let st = msg.into();
-    let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
-    let mut parser = Parser::new(lexer);
-    for (k, v) in placeholders {
-        parser.placeholder(k, v);
-    }
-
-    parser.parse()
 }

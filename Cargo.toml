@@ -1,5 +1,5 @@
 [package]
-name = "lobstermessage"
+name = "lobsterchat"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,3 +16,7 @@ features = ["serde"]
 [dependencies.serde]
 version = "1.0.138"
 features = ["derive"]
+
+[features]
+default = []
+minimessage = []
