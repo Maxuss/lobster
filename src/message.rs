@@ -1,5 +1,6 @@
 use logos::Lexer;
-use crate::{AsComponent, Component, MessageToken, Parser};
+use crate::{MessageToken, Parser};
+use crate::component::{AsComponent, Component};
 
 pub mod tokens;
 
@@ -17,7 +18,9 @@ pub fn placeholder_lobster<S: Into<String>, C: AsComponent + Sized, const N: usi
     let st = msg.into();
     let lexer: Lexer<MessageToken> = MessageToken::lexer(&st);
     let mut parser = Parser::new(lexer);
-    placeholders.iter().for_each(|(k, v)| parser.placeholder(k, v));
+    for (k, v) in placeholders {
+        parser.placeholder(k,v)
+    }
 
     parser.parse()
 }
