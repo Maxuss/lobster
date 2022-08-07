@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::str::FromStr;
 use anyhow::bail;
 use logos::{Lexer, Logos};
-use crate::component::{AsComponent, Component, Formatting, NamedColor};
+use crate::component::{AsComponent, ClickEvent, Component, Formatting, HoverEvent, NamedColor};
 
 fn grab_placeholder(lex: &mut Lexer<MessageToken>) -> Option<String> {
     let slice: &str = lex.slice();
@@ -48,6 +48,12 @@ pub enum MessageToken {
 
     #[regex("</?(obfuscated|bold|strikethrough|underline|italic|reset)>", grab_formatting)]
     Formatting((Formatting, bool)),
+
+    #[regex("<hover:(show_text|show_item|show_entity):.*>")]
+    HoverEvent(HoverEvent),
+
+    #[regex("<click:(change_page|copy_to_clipboard|open_file|open_url|run_command|suggest_command):.*>")]
+    ClickEvent(ClickEvent),
 
     #[regex("<[^\\\\/\\s^<>#]+>", grab_placeholder)]
     PlaceholderTag(String),

@@ -2,8 +2,7 @@
 
 extern crate test;
 
-use logos::Lexer;
-use crate::component::{AsComponent, Component};
+#[cfg(feature = "minimessage")]
 use message::tokens::{MessageToken, Parser};
 
 pub mod component;
@@ -18,12 +17,17 @@ mod tests {
     #![allow(soft_unstable)]
 
     use test::Bencher;
+    use logos::Lexer;
+    #[cfg(feature = "minimessage")]
     use crate::message::tokens::{MessageToken, Parser};
-    use logos::{Lexer, Logos};
+    #[cfg(feature = "minimessage")]
     use crate::{Component, lobster, placeholder_lobster};
+    use crate::component::Component;
+    #[cfg(feature = "minimessage")]
     use crate::message::{lobster, placeholder_lobster};
 
     #[test]
+    #[cfg(feature = "minimessage")]
     fn test_lexer() {
         let mut lexer: Lexer<MessageToken> = MessageToken
             ::lexer("<#AABBCC>Hex text<reset>Stop hex text");
@@ -34,6 +38,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "minimessage")]
     fn test_parser() {
         let lexer: Lexer<MessageToken> = MessageToken::lexer("<red>Red text");
         let mut parser = Parser::new(lexer);
@@ -46,6 +51,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "minimessage")]
     fn test_placeholders() {
         let lobster = placeholder_lobster("Before placeholder, <replace_me> Stuff after placeholder. <another>", [
             ("replace_me", lobster("<aqua>This is a <dark_aqua>placeholder!<reset>")),
@@ -56,6 +62,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "minimessage")]
     fn test_flattening() {
         let mut message = lobster("<red>Some message<blue> Even more message <green>Green message ").append(Component::translate::<&str, Component>("some.message.translate", None));
 
@@ -63,6 +70,7 @@ mod tests {
     }
 
     #[bench]
+    #[cfg(feature = "minimessage")]
     fn benchmark_lobster(bencher: &mut Bencher) {
         bencher.iter(|| {
             test::black_box(lobster("<red>Red text <green>Green text <italic><yellow>Yellow italic text. <bold>BOLD. <red>Red text"))
