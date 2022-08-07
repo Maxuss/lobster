@@ -16,13 +16,13 @@ pub use message::{lobster, placeholder_lobster};
 mod tests {
     #![allow(soft_unstable)]
 
-    use test::Bencher;
-    use logos::Lexer;
+    
+    
     #[cfg(feature = "minimessage")]
     use crate::message::tokens::{MessageToken, Parser};
     #[cfg(feature = "minimessage")]
     use crate::{Component, lobster, placeholder_lobster};
-    use crate::component::Component;
+    
     #[cfg(feature = "minimessage")]
     use crate::message::{lobster, placeholder_lobster};
 
