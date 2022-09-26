@@ -1,7 +1,3 @@
-#![feature(test)]
-
-extern crate test;
-
 #[cfg(feature = "minimessage")]
 use message::tokens::{MessageToken, Parser};
 
@@ -16,7 +12,6 @@ pub use message::{lobster, placeholder_lobster};
 mod tests {
     #![allow(soft_unstable)]
 
-    use test::Bencher;
     use logos::Lexer;
     #[cfg(feature = "minimessage")]
     use crate::message::tokens::{MessageToken, Parser};
@@ -69,11 +64,11 @@ mod tests {
         println!("{}", message.flatten())
     }
 
-    #[bench]
-    #[cfg(feature = "minimessage")]
-    fn benchmark_lobster(bencher: &mut Bencher) {
-        bencher.iter(|| {
-            test::black_box(lobster("<red>Red text <green>Green text <italic><yellow>Yellow italic text. <bold>BOLD. <red>Red text"))
-        })
-    }
+    // #[bench]
+    // #[cfg(feature = "minimessage")]
+    // fn benchmark_lobster(bencher: &mut Bencher) {
+    //     bencher.iter(|| {
+    //         test::black_box(lobster("<red>Red text <green>Green text <italic><yellow>Yellow italic text. <bold>BOLD. <red>Red text"))
+    //     })
+    // }
 }

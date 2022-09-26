@@ -156,11 +156,19 @@ impl ToString for Component {
 }
 
 macro_rules! _fmt_impl {
-    ($($n:ident),* $(,)*) => {
+    ($($n:ident ($gn:ident)),* $(,)*) => {
         $(
         pub fn $n(&mut self, $n: bool) -> Self {
             self.$n = Some($n);
             self.clone()
+        }
+
+        pub fn $gn(&self) -> bool {
+            if let Some(val) = self.$n {
+                val
+            } else {
+                false
+            }
         }
         )*
     }
@@ -322,8 +330,22 @@ impl Component {
         self.clone()
     }
 
+    pub fn get_color(&mut self) -> TextColor {
+        match &self.color {
+            None => TextColor::Named(NamedColor::White),
+            Some(color) => color.to_owned()
+        }
+    }
+
+    pub fn get_text_content(&mut self) -> Option<String> {
+        match &self.contents {
+            MessageContents::Plain { text } => Some(text.clone()),
+            _ => None
+        }
+    }
+
     _fmt_impl! {
-        bold, italic, obfuscated, strikethrough, underlined, reset,
+        bold(get_bold), italic(get_italic), obfuscated(get_obfuscated), strikethrough(get_strikethrough), underlined(get_underlined), reset(get_reset),
     }
 
     pub fn formatted(&mut self, format: Formatting, enable: Option<bool>) -> Component {
@@ -336,6 +358,17 @@ impl Component {
             Formatting::Underline => self.underlined(do_enable),
             Formatting::Italic => self.italic(do_enable),
             Formatting::Reset => self.reset(do_enable)
+        }
+    }
+
+    pub fn get_formatting(&self, format: Formatting) -> bool {
+        match format {
+            Formatting::Obfuscated => self.get_obfuscated(),
+            Formatting::Bold => self.get_bold(),
+            Formatting::Strikethrough => self.get_strikethrough(),
+            Formatting::Underline => self.get_underlined(),
+            Formatting::Italic => self.get_italic(),
+            Formatting::Reset => self.get_reset()
         }
     }
 
@@ -457,7 +490,7 @@ pub enum TextColor {
     Hex(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NamedColor {
     DarkRed,
