@@ -1,4 +1,4 @@
-use crate::component::{AsComponent, ClickEvent, Component, Formatting, HoverEvent, NamedColor};
+use crate::component::{AsComponent, Colored, Component, Formatting, NamedColor};
 use anyhow::bail;
 use logos::{Lexer, Logos};
 use std::collections::{HashMap, VecDeque};
@@ -115,9 +115,7 @@ impl<'a> Parser<'a> {
                     let mut text = Component::text(&contents);
                     while let Some(stacked) = self.stack.pop_front() {
                         match stacked {
-                            MessageToken::HexColor(hex) => {
-                                text = text.hex_color(hex);
-                            }
+                            MessageToken::HexColor(hex) => text = text.color(hex),
                             MessageToken::NamedColor(color) => {
                                 text = text.color(color);
                             }

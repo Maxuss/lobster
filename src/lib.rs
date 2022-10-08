@@ -14,9 +14,9 @@ mod tests {
 
     use crate::component::Component;
     use crate::message::tokens::{MessageToken, Parser};
-    use crate::message::{lobster, placeholder_lobster};
-    use crate::{lobster, placeholder_lobster, Component};
+    use crate::{lobster, placeholder_lobster};
     use logos::Lexer;
+    use logos::Logos;
 
     #[test]
     #[cfg(feature = "minimessage")]

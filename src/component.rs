@@ -177,6 +177,32 @@ macro_rules! _fmt_impl {
     }
 }
 
+pub trait Colored<C> {
+    fn color(&mut self, color: C) -> Self;
+}
+
+impl Colored<u32> for Component {
+    fn color(&mut self, color: u32) -> Self {
+        let str = format!("#{:2X}", color);
+        self.color = Some(TextColor::Hex(str));
+        self.clone()
+    }
+}
+
+impl Colored<NamedColor> for Component {
+    fn color(&mut self, color: NamedColor) -> Self {
+        self.color = Some(TextColor::Named(color));
+        self.clone()
+    }
+}
+
+impl Colored<TextColor> for Component {
+    fn color(&mut self, color: TextColor) -> Self {
+        self.color = Some(color);
+        self.clone()
+    }
+}
+
 impl Component {
     pub fn text<S>(msg: S) -> Self
     where
@@ -322,17 +348,6 @@ impl Component {
             self.extra = Some(vec![comp]);
             self.clone()
         };
-    }
-
-    pub fn hex_color(&mut self, color: u32) -> Self {
-        let str = format!("#{:2X}", color);
-        self.color = Some(TextColor::Hex(str));
-        self.clone()
-    }
-
-    pub fn color(&mut self, color: NamedColor) -> Self {
-        self.color = Some(TextColor::Named(color));
-        self.clone()
     }
 
     pub fn get_color(&mut self) -> TextColor {
