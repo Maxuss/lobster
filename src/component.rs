@@ -1,13 +1,16 @@
-use std::str::FromStr;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use std::str::FromStr;
 use uuid::Uuid;
 
 pub trait AsComponent {
     fn as_component(&self) -> Component;
 }
 
-impl<S> AsComponent for S where S: Into<Component> + Clone {
+impl<S> AsComponent for S
+where
+    S: Into<Component> + Clone,
+{
     fn as_component(&self) -> Component {
         self.clone().into()
     }
@@ -24,16 +27,16 @@ impl From<&str> for Component {
 pub struct DisplayItemData {
     pub id: String,
     pub count: Option<i32>,
-    pub tag: Option<String>
+    pub tag: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[skip_serializing_none]
 pub struct DisplayEntityData {
-    pub name: Option<Component> ,
+    pub name: Option<Component>,
     #[serde(rename = "type")]
     pub entity_type: String,
-    pub id: Uuid
+    pub id: Uuid,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,37 +44,37 @@ pub struct DisplayEntityData {
 pub enum HoverEvent {
     ShowText {
         action: String,
-        contents: Box<Component>
+        contents: Box<Component>,
     },
     ShowItem {
         action: String,
-        contents: DisplayItemData
+        contents: DisplayItemData,
     },
     ShowEntity {
         action: String,
-        contents: Box<DisplayEntityData>
-    }
+        contents: Box<DisplayEntityData>,
+    },
 }
 
 impl HoverEvent {
     pub fn show_text(text: Component) -> HoverEvent {
         HoverEvent::ShowText {
             action: "show_text".to_string(),
-            contents: Box::new(text)
+            contents: Box::new(text),
         }
     }
 
     pub fn show_item(item_data: DisplayItemData) -> HoverEvent {
         HoverEvent::ShowItem {
             action: "show_item".to_string(),
-            contents: item_data
+            contents: item_data,
         }
     }
 
     pub fn show_entity(entity_data: DisplayEntityData) -> HoverEvent {
         HoverEvent::ShowEntity {
             action: "show_entity".to_string(),
-            contents: Box::new(entity_data)
+            contents: Box::new(entity_data),
         }
     }
 }
@@ -79,42 +82,42 @@ impl HoverEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClickEvent {
     action: ClickAction,
-    value: String
+    value: String,
 }
 
 impl ClickEvent {
     pub fn open_url<S: Into<String>>(url: S) -> Self {
         Self {
             action: ClickAction::OpenUrl,
-            value: url.into()
+            value: url.into(),
         }
     }
 
     pub fn run_command<S: Into<String>>(cmd: S) -> Self {
         Self {
             action: ClickAction::RunCommand,
-            value: cmd.into()
+            value: cmd.into(),
         }
     }
 
     pub fn suggest_command<S: Into<String>>(cmd: S) -> Self {
         Self {
             action: ClickAction::SuggestCommand,
-            value: cmd.into()
+            value: cmd.into(),
         }
     }
 
     pub fn change_page(page: i32) -> Self {
         Self {
             action: ClickAction::ChangePage,
-            value: page.to_string()
+            value: page.to_string(),
         }
     }
 
     pub fn copy_to_clipboard<S: Into<String>>(msg: S) -> Self {
         Self {
             action: ClickAction::CopyToClipboard,
-            value: msg.into()
+            value: msg.into(),
         }
     }
 }
@@ -126,7 +129,7 @@ enum ClickAction {
     RunCommand,
     SuggestCommand,
     ChangePage,
-    CopyToClipboard
+    CopyToClipboard,
 }
 
 #[skip_serializing_none]
@@ -146,7 +149,7 @@ pub struct Component {
     #[serde(rename = "clickEvent")]
     click_event: Option<ClickEvent>,
     #[serde(rename = "hoverEvent")]
-    hover_event: Option<HoverEvent>
+    hover_event: Option<HoverEvent>,
 }
 
 impl ToString for Component {
@@ -176,8 +179,8 @@ macro_rules! _fmt_impl {
 
 impl Component {
     pub fn text<S>(msg: S) -> Self
-        where
-            S: Into<String>,
+    where
+        S: Into<String>,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Plain { text: msg.into() };
@@ -185,9 +188,9 @@ impl Component {
     }
 
     pub fn translate<S, C>(msg: S, placeholders: Option<Vec<C>>) -> Self
-        where
-            S: Into<String>,
-            C: AsComponent,
+    where
+        S: Into<String>,
+        C: AsComponent,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Translate(TranslatedMessage {
@@ -202,8 +205,8 @@ impl Component {
     }
 
     pub fn score<S>(name: S, objective: S, placeholder: Option<S>) -> Self
-        where
-            S: Into<String>,
+    where
+        S: Into<String>,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Score {
@@ -217,9 +220,9 @@ impl Component {
     }
 
     pub fn entity<S, C>(selector: S, separator: Option<C>) -> Self
-        where
-            S: Into<String>,
-            C: AsComponent,
+    where
+        S: Into<String>,
+        C: AsComponent,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Entity(Box::from(EntityMessage {
@@ -231,7 +234,9 @@ impl Component {
 
     pub fn keybind<S: Into<String>>(key: S) -> Self {
         let mut df = Self::default();
-        df.contents = MessageContents::Keybind(KeyMessage { keybind: key.into() });
+        df.contents = MessageContents::Keybind(KeyMessage {
+            keybind: key.into(),
+        });
         df.clone()
     }
 
@@ -241,9 +246,9 @@ impl Component {
         interpret: Option<bool>,
         separator: Option<C>,
     ) -> Self
-        where
-            S: Into<String>,
-            C: AsComponent,
+    where
+        S: Into<String>,
+        C: AsComponent,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Nbt(Box::from(NbtMessage {
@@ -263,9 +268,9 @@ impl Component {
         interpret: Option<bool>,
         separator: Option<C>,
     ) -> Self
-        where
-            S: Into<String>,
-            C: AsComponent,
+    where
+        S: Into<String>,
+        C: AsComponent,
     {
         let mut df = Self::default();
         df.contents = MessageContents::Nbt(Box::from(NbtMessage {
@@ -295,8 +300,8 @@ impl Component {
     }
 
     pub fn append<C>(&mut self, comp: C) -> Self
-        where
-            C: Into<Component>,
+    where
+        C: Into<Component>,
     {
         if let Some(vec) = &mut self.extra {
             vec.push(comp.into());
@@ -316,7 +321,7 @@ impl Component {
         } else {
             self.extra = Some(vec![comp]);
             self.clone()
-        }
+        };
     }
 
     pub fn hex_color(&mut self, color: u32) -> Self {
@@ -333,14 +338,14 @@ impl Component {
     pub fn get_color(&mut self) -> TextColor {
         match &self.color {
             None => TextColor::Named(NamedColor::White),
-            Some(color) => color.to_owned()
+            Some(color) => color.to_owned(),
         }
     }
 
     pub fn get_text_content(&mut self) -> Option<String> {
         match &self.contents {
             MessageContents::Plain { text } => Some(text.clone()),
-            _ => None
+            _ => None,
         }
     }
 
@@ -357,7 +362,7 @@ impl Component {
             Formatting::Strikethrough => self.strikethrough(do_enable),
             Formatting::Underline => self.underlined(do_enable),
             Formatting::Italic => self.italic(do_enable),
-            Formatting::Reset => self.reset(do_enable)
+            Formatting::Reset => self.reset(do_enable),
         }
     }
 
@@ -368,7 +373,7 @@ impl Component {
             Formatting::Strikethrough => self.get_strikethrough(),
             Formatting::Underline => self.get_underlined(),
             Formatting::Italic => self.get_italic(),
-            Formatting::Reset => self.get_reset()
+            Formatting::Reset => self.get_reset(),
         }
     }
 
@@ -381,7 +386,7 @@ impl Component {
             }
         }
 
-        return buf
+        return buf;
     }
 }
 
@@ -392,7 +397,7 @@ pub enum Formatting {
     Strikethrough,
     Underline,
     Italic,
-    Reset
+    Reset,
 }
 
 impl FromStr for Formatting {
@@ -408,7 +413,7 @@ impl FromStr for Formatting {
             "underline" => Underline,
             "italic" => Italic,
             "reset" => Reset,
-            _ => return Err(())
+            _ => return Err(()),
         })
     }
 }
@@ -440,7 +445,7 @@ impl MessageContents {
             MessageContents::Score { .. } => "<scoreboard message>".into(),
             MessageContents::Entity(_) => "<entity message>".into(),
             MessageContents::Keybind(key) => key.keybind.clone(),
-            MessageContents::Nbt(_) => "<nbt message>".into()
+            MessageContents::Nbt(_) => "<nbt message>".into(),
         }
     }
 }
@@ -530,10 +535,10 @@ impl FromStr for NamedColor {
             "light_purple" => LightPurple,
             "dark_purple" => DarkPurple,
             "white" => White,
-            "gray" =>  Gray,
+            "gray" => Gray,
             "dark_gray" => DarkGray,
             "black" => Black,
-            _ => return Err(())
+            _ => return Err(()),
         })
     }
 }

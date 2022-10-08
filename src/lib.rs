@@ -7,25 +7,22 @@ pub mod message;
 #[cfg(feature = "minimessage")]
 pub use message::{lobster, placeholder_lobster};
 
-
 #[cfg(test)]
+#[cfg(feature = "minimessage")]
 mod tests {
     #![allow(soft_unstable)]
 
-    use logos::Lexer;
-    #[cfg(feature = "minimessage")]
-    use crate::message::tokens::{MessageToken, Parser};
-    #[cfg(feature = "minimessage")]
-    use crate::{Component, lobster, placeholder_lobster};
     use crate::component::Component;
-    #[cfg(feature = "minimessage")]
+    use crate::message::tokens::{MessageToken, Parser};
     use crate::message::{lobster, placeholder_lobster};
+    use crate::{lobster, placeholder_lobster, Component};
+    use logos::Lexer;
 
     #[test]
     #[cfg(feature = "minimessage")]
     fn test_lexer() {
-        let mut lexer: Lexer<MessageToken> = MessageToken
-            ::lexer("<#AABBCC>Hex text<reset>Stop hex text");
+        let mut lexer: Lexer<MessageToken> =
+            MessageToken::lexer("<#AABBCC>Hex text<reset>Stop hex text");
 
         while let Some(tk) = lexer.next() {
             println!("{:?}", tk)
@@ -48,10 +45,16 @@ mod tests {
     #[test]
     #[cfg(feature = "minimessage")]
     fn test_placeholders() {
-        let lobster = placeholder_lobster("Before placeholder, <replace_me> Stuff after placeholder. <another>", [
-            ("replace_me", lobster("<aqua>This is a <dark_aqua>placeholder!<reset>")),
-            ("another", lobster("<gold><bold>Another placeholder!"))
-        ]);
+        let lobster = placeholder_lobster(
+            "Before placeholder, <replace_me> Stuff after placeholder. <another>",
+            [
+                (
+                    "replace_me",
+                    lobster("<aqua>This is a <dark_aqua>placeholder!<reset>"),
+                ),
+                ("another", lobster("<gold><bold>Another placeholder!")),
+            ],
+        );
 
         println!("{}", serde_json::to_string(&lobster).unwrap());
     }
@@ -59,7 +62,10 @@ mod tests {
     #[test]
     #[cfg(feature = "minimessage")]
     fn test_flattening() {
-        let mut message = lobster("<red>Some message<blue> Even more message <green>Green message ").append(Component::translate::<&str, Component>("some.message.translate", None));
+        let mut message =
+            lobster("<red>Some message<blue> Even more message <green>Green message ").append(
+                Component::translate::<&str, Component>("some.message.translate", None),
+            );
 
         println!("{}", message.flatten())
     }
