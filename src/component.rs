@@ -1,9 +1,16 @@
+//!
+//! Main module containing all the component related things
+//!
+
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::str::FromStr;
 use uuid::Uuid;
 
+/// This trait allows you to convert an object into a component
+/// by passing it as reference
 pub trait AsComponent {
+    /// Converts this object reference to a component
     fn as_component(&self) -> Component;
 }
 
@@ -12,126 +19,150 @@ where
     S: Into<Component> + Clone,
 {
     fn as_component(&self) -> Component {
-        self.clone().into()
+        let cmp: Component = self.clone().into();
+        cmp
     }
 }
 
 impl From<&str> for Component {
     fn from(str: &str) -> Self {
-        str.as_component()
+        Component::text(str)
     }
 }
 
+impl From<String> for Component {
+    fn from(value: String) -> Self {
+        Component::text(value)
+    }
+}
+
+/// A container for item data to be displayed
+/// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[skip_serializing_none]
 pub struct DisplayItemData {
+    /// Namespaced ID of this item. Stored in format of
+    /// `namespace:identifier`
     pub id: String,
+    /// Count of items to be displayed
     pub count: Option<i32>,
+    /// Extra [SNBT](https://minecraft.fandom.com/wiki/NBT_format) tag containing item information, like
+    /// the `display`, `Enchantments`, etc.
     pub tag: Option<String>,
 }
 
+/// A container for entity data to be displayed
+/// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[skip_serializing_none]
 pub struct DisplayEntityData {
+    /// Optional display name of entity
     pub name: Option<Component>,
+    /// Namespaced ID of this entity's type.
+    /// Stored in format of `namespace:identifier`
     #[serde(rename = "type")]
     pub entity_type: String,
+    /// Unique ID of this entity. Can usually be random, unless
+    /// you want to display a specific entity.
     pub id: Uuid,
 }
 
+/// Container for component hover events.
+/// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "action")]
 pub enum HoverEvent {
+    /// Shows text on hover
     ShowText {
-        action: String,
+        /// The component to be displayed.
+        /// Boxed to avoid possible recursion problems.
         contents: Box<Component>,
     },
+    /// Displays an item's tooltip to player
     ShowItem {
-        action: String,
+        /// Item data to be displayed.
         contents: DisplayItemData,
     },
+    /// Displays entity data to player
     ShowEntity {
-        action: String,
+        /// The entity to be displayed.
+        /// Boxed to avoid possible recursion problems.
         contents: Box<DisplayEntityData>,
     },
 }
 
 impl HoverEvent {
+    /// Shows provided component on hover
     pub fn show_text(text: Component) -> HoverEvent {
         HoverEvent::ShowText {
-            action: "show_text".to_string(),
             contents: Box::new(text),
         }
     }
 
+    /// Shows provided item data on hover
     pub fn show_item(item_data: DisplayItemData) -> HoverEvent {
         HoverEvent::ShowItem {
-            action: "show_item".to_string(),
             contents: item_data,
         }
     }
 
+    /// Shows provided entity data on hover
     pub fn show_entity(entity_data: DisplayEntityData) -> HoverEvent {
         HoverEvent::ShowEntity {
-            action: "show_entity".to_string(),
             contents: Box::new(entity_data),
         }
     }
 }
 
+/// Container for click events
+/// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ClickEvent {
-    action: ClickAction,
-    value: String,
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "action", content = "value")]
+pub enum ClickEvent {
+    /// Opens the provided URL on click
+    OpenUrl(String),
+    /// Runs the provided command on click
+    RunCommand(String),
+    /// Suggests (puts in the chat box) the provided command on click
+    SuggestCommand(String),
+    /// Changes current open book's page
+    ChangePage(String),
+    /// Copies provided data to clipboard
+    CopyToClipboard(String),
 }
 
 impl ClickEvent {
+    /// Opens the provided URL on click
     pub fn open_url<S: Into<String>>(url: S) -> Self {
-        Self {
-            action: ClickAction::OpenUrl,
-            value: url.into(),
-        }
+        Self::OpenUrl(url.into())
     }
 
+    /// Runs the provided command on click
     pub fn run_command<S: Into<String>>(cmd: S) -> Self {
-        Self {
-            action: ClickAction::RunCommand,
-            value: cmd.into(),
-        }
+        Self::RunCommand(cmd.into())
     }
 
+    /// Suggests (puts in the chat box) the provided command on click
     pub fn suggest_command<S: Into<String>>(cmd: S) -> Self {
-        Self {
-            action: ClickAction::SuggestCommand,
-            value: cmd.into(),
-        }
+        Self::SuggestCommand(cmd.into())
     }
 
+    /// Changes current open book's page7
     pub fn change_page(page: i32) -> Self {
-        Self {
-            action: ClickAction::ChangePage,
-            value: page.to_string(),
-        }
+        Self::ChangePage(page.to_string())
     }
 
+    /// Copies provided data to clipboard
     pub fn copy_to_clipboard<S: Into<String>>(msg: S) -> Self {
-        Self {
-            action: ClickAction::CopyToClipboard,
-            value: msg.into(),
-        }
+        Self::CopyToClipboard(msg.into())
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ClickAction {
-    OpenUrl,
-    RunCommand,
-    SuggestCommand,
-    ChangePage,
-    CopyToClipboard,
-}
-
+/// The JSON chat component container
+/// Note that the components are *immutable*, an they are cloned
+/// each time they are modified.
 #[skip_serializing_none]
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct Component {
@@ -159,25 +190,37 @@ impl ToString for Component {
 }
 
 macro_rules! _fmt_impl {
-    ($($n:ident ($gn:ident)),* $(,)*) => {
+    ($($n:ident $sn:expr => $gn:ident),* $(,)*) => {
         $(
-        pub fn $n(&mut self, $n: bool) -> Self {
-            self.$n = Some($n);
-            self.clone()
-        }
-
-        pub fn $gn(&self) -> bool {
-            if let Some(val) = self.$n {
-                val
-            } else {
-                false
+            /// Gives or removes the `
+            #[doc = $sn]
+            ///` effect from this component
+            pub fn $n(&mut self, $n: bool) -> Self {
+                self.$n = Some($n);
+                self.clone()
             }
-        }
-        )*
+
+            /// Returns whether the `
+            #[doc = $sn]
+            ///` effect is enabled in this component
+            pub fn $gn(&self) -> bool {
+                if let Some(val) = self.$n {
+                    val
+                } else {
+                    false
+                }
+            }
+            )*
+    };
+
+    ($($n:ident ($gn:ident)),* $(,)*) => {
+        _fmt_impl!($($n stringify!($n) => $gn),*);
     }
 }
 
+/// A trait to color the components more easily
 pub trait Colored<C> {
+    /// Adds colored to the object
     fn color(&mut self, color: C) -> Self;
 }
 
@@ -204,6 +247,7 @@ impl Colored<TextColor> for Component {
 }
 
 impl Component {
+    /// Constructs a new literal text component.
     pub fn text<S>(msg: S) -> Self
     where
         S: Into<String>,
@@ -213,6 +257,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs a new translatable component.
     pub fn translate<S, C>(msg: S, placeholders: Option<Vec<C>>) -> Self
     where
         S: Into<String>,
@@ -230,6 +275,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs a new scoreboard component.
     pub fn score<S>(name: S, objective: S, placeholder: Option<S>) -> Self
     where
         S: Into<String>,
@@ -245,6 +291,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs a new entity-mentioning component
     pub fn entity<S, C>(selector: S, separator: Option<C>) -> Self
     where
         S: Into<String>,
@@ -258,6 +305,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs a new keybind component
     pub fn keybind<S: Into<String>>(key: S) -> Self {
         let mut df = Self::default();
         df.contents = MessageContents::Keybind(KeyMessage {
@@ -266,6 +314,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs an entity nbt data based component
     pub fn entity_nbt<S, C>(
         path: S,
         selector: S,
@@ -288,6 +337,7 @@ impl Component {
         df.clone()
     }
 
+    /// Constructs a new storage nbt data based component
     pub fn storage_nbt<S, C>(
         path: S,
         storage: S,
@@ -310,21 +360,26 @@ impl Component {
         df.clone()
     }
 
+    /// Adds text that is inserted each time you click this component.
+    /// Not connected to [ClickEvent]
     pub fn insert_text<S: Into<String>>(&mut self, text: S) -> Self {
         self.insertion = Some(text.into());
         self.clone()
     }
 
+    /// Adds a click event handler to this component
     pub fn click_event(&mut self, e: ClickEvent) -> Self {
         self.click_event = Some(e);
         self.clone()
     }
 
+    /// Adds a hover event handler to this component
     pub fn hover_event(&mut self, e: HoverEvent) -> Self {
         self.hover_event = Some(e);
         self.clone()
     }
 
+    /// Appends another component to this one.
     pub fn append<C>(&mut self, comp: C) -> Self
     where
         C: Into<Component>,
@@ -338,6 +393,28 @@ impl Component {
         self.clone()
     }
 
+    /// Appends another component to the last child component.
+    ///
+    /// Imagine this structure:
+    /// ```text
+    /// --- component foo:
+    ///     --- component bar
+    ///     --- component baz
+    /// ```
+    /// When you normally [`Self::append()`] a component it gets pushed further, giving this structure:
+    /// ```text
+    /// --- component foo:
+    ///     --- component bar
+    ///     --- component baz
+    ///     --- component quz
+    /// ```
+    /// But [`Self::append_to_last_child()`] instead pushes it to the last component in children stack:
+    /// ```text
+    /// --- component foo:
+    ///     --- component bar
+    ///     --- component baz:
+    ///         --- component quz
+    /// ```
     pub fn append_to_last_child(&mut self, comp: Component) -> Self {
         return if let Some(vec) = &mut self.extra {
             let mut last = vec.pop().unwrap();
@@ -350,6 +427,7 @@ impl Component {
         };
     }
 
+    /// Gets the current color of this component, or white if it is not assigned.
     pub fn get_color(&mut self) -> TextColor {
         match &self.color {
             None => TextColor::Named(NamedColor::White),
@@ -357,6 +435,8 @@ impl Component {
         }
     }
 
+    /// Attempts to get text contents of this component.
+    /// Returns [None] if this component is not a Literal Text Component
     pub fn get_text_content(&mut self) -> Option<String> {
         match &self.contents {
             MessageContents::Plain { text } => Some(text.clone()),
@@ -368,6 +448,7 @@ impl Component {
         bold(get_bold), italic(get_italic), obfuscated(get_obfuscated), strikethrough(get_strikethrough), underlined(get_underlined), reset(get_reset),
     }
 
+    /// Adds a formatting to this component. Passing [None] to the `enable` argument is equivalent of passing `Some(true)`
     pub fn formatted(&mut self, format: Formatting, enable: Option<bool>) -> Component {
         let do_enable = enable.unwrap_or(true);
 
@@ -381,6 +462,7 @@ impl Component {
         }
     }
 
+    /// Gets whether the specific formatting is enabled in this component
     pub fn get_formatting(&self, format: Formatting) -> bool {
         match format {
             Formatting::Obfuscated => self.get_obfuscated(),
@@ -392,6 +474,7 @@ impl Component {
         }
     }
 
+    /// Flattens this component, getting the *approximate* contents of it
     pub fn flatten(&mut self) -> String {
         let mut buf = self.contents.flatten();
 
@@ -405,13 +488,20 @@ impl Component {
     }
 }
 
+/// Type of formatting for component
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
 pub enum Formatting {
+    /// Renders component as obfuscated
     Obfuscated,
+    /// Renders component in **bold**
     Bold,
+    /// Renders component as ~strikethrough~
     Strikethrough,
+    /// Renders component underlined
     Underline,
+    /// Renders component in *italic*
     Italic,
+    /// Resets the current component formatting
     Reset,
 }
 
@@ -433,14 +523,27 @@ impl FromStr for Formatting {
     }
 }
 
+/// Container for inner contents of a component
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum MessageContents {
-    Plain { text: String },
+    /// Literal text
+    Plain {
+        /// Text to be displayed
+        text: String,
+    },
+    /// Translatable component
     Translate(TranslatedMessage),
-    Score { score: ScoreboardMessage },
+    /// Scoreboard component
+    Score {
+        /// Scoreboard message to be displayed
+        score: ScoreboardMessage,
+    },
+    /// Entity component
     Entity(Box<EntityMessage>),
+    /// Keybind component
     Keybind(KeyMessage),
+    /// NBT component
     Nbt(Box<NbtMessage>),
 }
 
@@ -453,6 +556,7 @@ impl Default for MessageContents {
 }
 
 impl MessageContents {
+    /// Flattens this component, acquiring it's inner data
     pub fn flatten(&self) -> String {
         match self {
             MessageContents::Plain { text } => text.clone(),
@@ -465,6 +569,7 @@ impl MessageContents {
     }
 }
 
+/// NBT based message
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NbtMessage {
@@ -476,11 +581,13 @@ pub struct NbtMessage {
     storage: Option<String>,
 }
 
+/// Keybind based message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyMessage {
     keybind: String,
 }
 
+/// Entity based message
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntityMessage {
@@ -488,6 +595,7 @@ pub struct EntityMessage {
     separator: Option<Component>,
 }
 
+/// Translatable message
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TranslatedMessage {
@@ -495,6 +603,7 @@ pub struct TranslatedMessage {
     with: Option<Vec<Component>>,
 }
 
+/// Scoreboard message
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScoreboardMessage {
@@ -503,15 +612,20 @@ pub struct ScoreboardMessage {
     value: Option<String>,
 }
 
+/// A text color formatting
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TextColor {
+    /// A named color
     Named(NamedColor),
+    /// A hex string color
     Hex(String),
 }
 
+/// A named color
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(missing_docs)]
 pub enum NamedColor {
     DarkRed,
     Red,

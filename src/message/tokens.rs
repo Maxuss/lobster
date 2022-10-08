@@ -39,7 +39,7 @@ fn grab_hex(lex: &mut Lexer<MessageToken>) -> Option<u32> {
 }
 
 #[derive(Debug, Clone, Logos)]
-pub enum MessageToken {
+pub(crate) enum MessageToken {
     #[regex("<#[\\da-fA-F]+>", grab_hex)]
     HexColor(u32),
 
@@ -68,7 +68,7 @@ pub enum MessageToken {
 }
 
 #[derive(Debug, Clone)]
-pub struct Parser<'a> {
+pub(crate) struct Parser<'a> {
     tokens: Lexer<'a, MessageToken>,
     stack: VecDeque<MessageToken>,
     placeholders: HashMap<String, Component>,
@@ -76,7 +76,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a, MessageToken>) -> Self {
+    pub(crate) fn new(lexer: Lexer<'a, MessageToken>) -> Self {
         Self {
             tokens: lexer,
             stack: VecDeque::new(),
@@ -85,19 +85,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn placeholder<S: Into<String>, P: AsComponent>(&mut self, name: S, placeholder: P) {
+    pub(crate) fn placeholder<S: Into<String>, P: AsComponent>(&mut self, name: S, placeholder: P) {
         self.placeholders
             .insert(name.into(), placeholder.as_component());
     }
 
-    pub fn parse(mut self) -> Component {
+    pub(crate) fn parse(mut self) -> Component {
         while let Ok(()) = self.advance() {
             // no-op
         }
         self.finish()
     }
 
-    pub fn advance(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn advance(&mut self) -> anyhow::Result<()> {
         if let Some(tk) = self.tokens.next() {
             return match tk {
                 MessageToken::PlaceholderTag(placeholder) => {

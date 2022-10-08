@@ -24,5 +24,5 @@ version = "1.0.138"
 features = ["derive"]
 
 [features]
-default = ["minimessage"]
+default = []
 minimessage = []
