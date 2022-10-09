@@ -38,7 +38,7 @@ impl From<String> for Component {
 
 /// A container for item data to be displayed
 /// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord)]
 #[skip_serializing_none]
 pub struct DisplayItemData {
     /// Namespaced ID of this item. Stored in format of
@@ -53,7 +53,7 @@ pub struct DisplayItemData {
 
 /// A container for entity data to be displayed
 /// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[skip_serializing_none]
 pub struct DisplayEntityData {
     /// Optional display name of entity
@@ -69,7 +69,7 @@ pub struct DisplayEntityData {
 
 /// Container for component hover events.
 /// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "action")]
 pub enum HoverEvent {
@@ -117,7 +117,7 @@ impl HoverEvent {
 
 /// Container for click events
 /// See [wiki.vg](https://wiki.vg/Chat#Schema) for more info.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "action", content = "value")]
 pub enum ClickEvent {
@@ -164,7 +164,7 @@ impl ClickEvent {
 /// Note that the components are *immutable*, an they are cloned
 /// each time they are modified.
 #[skip_serializing_none]
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct Component {
     extra: Option<Vec<Component>>,
     bold: Option<bool>,
@@ -524,7 +524,7 @@ impl FromStr for Formatting {
 }
 
 /// Container for inner contents of a component
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[serde(untagged)]
 pub enum MessageContents {
     /// Literal text
@@ -571,7 +571,7 @@ impl MessageContents {
 
 /// NBT based message
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct NbtMessage {
     nbt: String,
     interpret: Option<bool>,
@@ -582,14 +582,14 @@ pub struct NbtMessage {
 }
 
 /// Keybind based message
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct KeyMessage {
     keybind: String,
 }
 
 /// Entity based message
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct EntityMessage {
     selector: String,
     separator: Option<Component>,
@@ -597,7 +597,7 @@ pub struct EntityMessage {
 
 /// Translatable message
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct TranslatedMessage {
     translate: String,
     with: Option<Vec<Component>>,
@@ -605,7 +605,7 @@ pub struct TranslatedMessage {
 
 /// Scoreboard message
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct ScoreboardMessage {
     name: String,
     objective: String,
@@ -613,7 +613,7 @@ pub struct ScoreboardMessage {
 }
 
 /// A text color formatting
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[serde(untagged)]
 pub enum TextColor {
     /// A named color
@@ -623,7 +623,7 @@ pub enum TextColor {
 }
 
 /// A named color
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
 #[allow(missing_docs)]
 pub enum NamedColor {
