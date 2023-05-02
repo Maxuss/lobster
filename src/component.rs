@@ -1,3 +1,4 @@
+#![allow(clippy::field_reassign_with_default)]
 //!
 //! Main module containing all the component related things
 //!
@@ -254,7 +255,7 @@ impl Component {
     {
         let mut df = Self::default();
         df.contents = MessageContents::Plain { text: msg.into() };
-        df.clone()
+        df
     }
 
     /// Constructs a new translatable component.
@@ -272,7 +273,7 @@ impl Component {
                     .collect::<Vec<Component>>()
             }),
         });
-        df.clone()
+        df
     }
 
     /// Constructs a new scoreboard component.
@@ -288,7 +289,7 @@ impl Component {
                 value: placeholder.map(|it| it.into()),
             },
         };
-        df.clone()
+        df
     }
 
     /// Constructs a new entity-mentioning component
@@ -302,7 +303,7 @@ impl Component {
             selector: selector.into(),
             separator: separator.map(|it| it.as_component()),
         }));
-        df.clone()
+        df
     }
 
     /// Constructs a new keybind component
@@ -311,7 +312,7 @@ impl Component {
         df.contents = MessageContents::Keybind(KeyMessage {
             keybind: key.into(),
         });
-        df.clone()
+        df
     }
 
     /// Constructs an entity nbt data based component
@@ -334,7 +335,7 @@ impl Component {
             entity: Some(selector.into()),
             storage: None,
         }));
-        df.clone()
+        df
     }
 
     /// Constructs a new storage nbt data based component
@@ -357,7 +358,7 @@ impl Component {
             entity: None,
             storage: Some(storage.into()),
         }));
-        df.clone()
+        df
     }
 
     /// Adds text that is inserted each time you click this component.
@@ -416,7 +417,7 @@ impl Component {
     ///         --- component quz
     /// ```
     pub fn append_to_last_child(&mut self, comp: Component) -> Self {
-        return if let Some(vec) = &mut self.extra {
+        if let Some(vec) = &mut self.extra {
             let mut last = vec.pop().unwrap();
             last = last.append_to_last_child(comp);
             vec.push(last);
@@ -424,7 +425,7 @@ impl Component {
         } else {
             self.extra = Some(vec![comp]);
             self.clone()
-        };
+        }
     }
 
     /// Gets the current color of this component, or white if it is not assigned.
@@ -484,7 +485,7 @@ impl Component {
             }
         }
 
-        return buf;
+        buf
     }
 }
 

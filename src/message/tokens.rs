@@ -1,3 +1,5 @@
+#![allow(clippy::manual_strip)]
+
 use crate::component::{AsComponent, Colored, Component, Formatting, NamedColor};
 use anyhow::bail;
 use logos::{Lexer, Logos};
@@ -8,23 +10,23 @@ use std::str::FromStr;
 fn grab_placeholder(lex: &mut Lexer<MessageToken>) -> Option<String> {
     let slice: &str = lex.slice();
     // skipping begin tags
-    return Some(slice[1..slice.len() - 1].to_string());
+    Some(slice[1..slice.len() - 1].to_string())
 }
 
 fn grab_named_color(lex: &mut Lexer<MessageToken>) -> Option<NamedColor> {
     let slice: &str = lex.slice();
     let inner = &slice[1..slice.len() - 1];
-    Some(NamedColor::from_str(inner).ok()?)
+    NamedColor::from_str(inner).ok()
 }
 
 fn grab_formatting(lex: &mut Lexer<MessageToken>) -> Option<(Formatting, bool)> {
     let slice: &str = lex.slice();
     let inner = &slice[1..slice.len() - 1];
-    return if inner.starts_with("/") {
+    if inner.starts_with('/') {
         Some((Formatting::from_str(&inner[1..]).ok()?, false))
     } else {
         Some((Formatting::from_str(inner).ok()?, true))
-    };
+    }
 }
 
 fn grab_string(lex: &mut Lexer<MessageToken>) -> Option<String> {
@@ -35,7 +37,7 @@ fn grab_string(lex: &mut Lexer<MessageToken>) -> Option<String> {
 fn grab_hex(lex: &mut Lexer<MessageToken>) -> Option<u32> {
     let slice: &str = lex.slice();
     let inner = &slice[2..slice.len() - 1];
-    Some(u32::from_str_radix(inner, 16).ok()?)
+    u32::from_str_radix(inner, 16).ok()
 }
 
 #[derive(Debug, Clone, Logos)]
